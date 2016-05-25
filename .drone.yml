@@ -1,0 +1,15 @@
+build:
+  image: python:2.7
+  commands:
+    - pip install .
+
+publish:
+  docker:
+    username: drone
+    password: $$DOCKER_PASSWORD
+    email: drone@b4cc.com
+    registry: registry.b4cc.com:5000
+    repo: aws-ecs-service-discovery
+    tag: latest
+    file: Dockerfile
+    insecure: false
