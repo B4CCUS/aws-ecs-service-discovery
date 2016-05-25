@@ -175,6 +175,7 @@ def update_services(service_names=[], verbose=False):
     Otherwise update all.
     """
     info = get_info()
+    log('Read info {0}'.format(info));
     for service in info['services']:
         if (service_names and
                 service['family'] not in service_names and
@@ -198,6 +199,7 @@ def cli():
     args = parser.parse_args()
     if not args.quiet:
         logging.getLogger().setLevel(logging.INFO)
+    log('Running aws service update')
     update_services(args.service_names, True)
 
 pattern_arn = re.compile(
