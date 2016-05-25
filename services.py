@@ -18,10 +18,15 @@ import logging
 import os
 import re
 import boto
+import boto.ec2containerservice
+import boto.ec2
+import boto.route53
 
-ecs = boto.connect_ec2containerservice()
-ec2 = boto.connect_ec2()
-route53 = boto.connect_route53()
+aws_region = os.getenv('AWS_REGION', 'us-west-2')
+
+ecs = boto.ec2containerservice.connect_to_region(aws_region)
+ec2 = boto.ec2.connect_to_region(aws_region)
+route53 = boto.route53.connect_to_region(aws_region)
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%Y/%m/%d/ %I:%M:%S %p')
@@ -121,7 +126,7 @@ def get_zone_for_vpc(vpc_id):
     for zone in response['HostedZones']:
         zone_id = zone['Id'].split('/')[-1]
         detail = route53.get_hosted_zone(zone_id)['GetHostedZoneResponse']
-        if detail['VPCs']['VPC']['VPCId'] == vpc_id:
+        if 'VPCs' in detail and detail['VPCs']['VPC']['VPCId'] == vpc_id:
             return {'zone_id': zone_id, 'zone_name': zone['Name']}
 
 
