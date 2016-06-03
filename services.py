@@ -184,7 +184,7 @@ def update_services(service_names=[], verbose=False):
         if verbose:
             log('Registering {0}.{1} as {2}'.format(
                 service['name'], info['network']['zone_name'],
-                service['container_instance_internal_ip']))
+                service['container_instance_internal_ips']))
         dns(info['network']['zone_id'], info['network']['zone_name'],
             service['name'], service['container_instance_internal_ips'])
 
