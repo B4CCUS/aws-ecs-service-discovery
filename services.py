@@ -199,8 +199,11 @@ def cli():
     args = parser.parse_args()
     if not args.quiet:
         logging.getLogger().setLevel(logging.INFO)
-    log('Running aws service update')
-    update_services(args.service_names, True)
+
+    while True: 
+        log('Running aws service update')
+        update_services(args.service_names, True)
+        time.sleep(60)
 
 pattern_arn = re.compile(
     'arn:'
