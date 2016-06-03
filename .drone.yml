@@ -13,14 +13,3 @@ publish:
     tag: latest
     file: Dockerfile
     insecure: false
-deploy:
-    ecs:
-        image: plugins/drone-ecs
-        region: us-west-2
-        access_key: $$AWS_ACCESS_KEY_ID
-        secret_key: $$AWS_SECRET_KEY
-        cluster: development
-        family: service-discovery
-        image_name: registry.b4cc.com:5000/aws-ecs-service-discovery
-        image_tag: latest
-        service: service-discovery
