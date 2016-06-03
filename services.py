@@ -41,16 +41,6 @@ else:
     cluster = None
 
 
-class MultipleTasksRunningForService(Exception):
-
-    """It's assumed that there should be only 1 task running for a service.
-
-    Am I wrong? Tell me.
-    """
-
-    pass
-
-
 def get_task_definition_arns():
     """Request all API pages needed to get Task Definition ARNS."""
     next_token = []
@@ -82,9 +72,7 @@ def get_task_arn(family):
     arns = response['ListTasksResponse']['ListTasksResult']['taskArns']
     if len(arns) == 0:
         return None
-    if len(arns) > 1:
-        raise MultipleTasksRunningForService
-    return arns[0]
+    return arns
 
 
 def get_task_container_instance_arn(task_arn):
@@ -144,31 +132,38 @@ def get_info():
             log('    (Found non-service {family})'.format(**locals()))
             continue
         log('{family} service found'.format(**locals()))
-        service_arn = get_task_arn(family)
-        if not service_arn:
+        service_arns = get_task_arn(family)
+        if not service_arns:
             # task is not running, skip it
             log('{family} is not running'.format(**locals()))
             continue
         log('{family} is RUNNING'.format(**locals()))
         name = family[:-8]
-        container_instance_arn = get_task_container_instance_arn(service_arn)
-        ec2_instance_id = get_container_instance_ec2_id(container_instance_arn)
-        ec2_interface = get_ec2_interface(ec2_instance_id)
-        container_instance_internal_ip = ec2_interface.private_ip_address
+	
+        container_instance_internal_ips = []
+        for service_arn in service_arns:
+            container_instance_arn = get_task_container_instance_arn(service_arn)
+            ec2_instance_id = get_container_instance_ec2_id(container_instance_arn)
+            ec2_interface = get_ec2_interface(ec2_instance_id)
+            container_instance_internal_ips.append(ec2_interface.private_ip_address)
+	
+            # No need to get common network info on each loop over tasks
+            if 'vpc_id' not in _info['network']:
+                _info['network'].update(get_zone_for_vpc(ec2_interface.vpc_id))
+                _info['network']['vpc_id'] = ec2_interface.vpc_id
+
         _services = {k: v for (k, v) in locals().iteritems() if k[0] != '_'}
         _info['services'].append(_services)
-        # No need to get common network info on each loop over tasks
-        if 'vpc_id' not in _info['network']:
-            _info['network'].update(get_zone_for_vpc(ec2_interface.vpc_id))
-            _info['network']['vpc_id'] = ec2_interface.vpc_id
     return _info
 
 
-def dns(zone_id, zone_name, service_name, service_ip, ttl=20):
+def dns(zone_id, zone_name, service_name, service_ips, ttl=20):
     """Insert or update DNS record."""
     rrs = boto.route53.record.ResourceRecordSets(route53, zone_id)
-    rrs.add_change('UPSERT', '{service_name}.{zone_name}'.format(**locals()),
-                   'A', ttl).add_value(service_ip)
+    change = rrs.add_change('UPSERT', '{service_name}.{zone_name}'.format(**locals()),
+                   'A', ttl)
+    for service_ip in service_ips:
+        change.add_value(service_ip)
     rrs.commit()
     return rrs
 
@@ -191,7 +186,7 @@ def update_services(service_names=[], verbose=False):
                 service['name'], info['network']['zone_name'],
                 service['container_instance_internal_ip']))
         dns(info['network']['zone_id'], info['network']['zone_name'],
-            service['name'], service['container_instance_internal_ip'])
+            service['name'], service['container_instance_internal_ips'])
 
 
 def cli():
