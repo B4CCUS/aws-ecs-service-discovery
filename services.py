@@ -197,6 +197,8 @@ def cli():
                         help='list of services to start')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='supress output')
+    parser.add_argument('-l', '--loop', action='store_true',
+                        help='loop')
     args = parser.parse_args()
     if not args.quiet:
         logging.getLogger().setLevel(logging.INFO)
@@ -204,8 +206,12 @@ def cli():
     while True: 
         log('Running aws service update')
         update_services(args.service_names, True)
-        log('Sleeping for a few minutes')
-        time.sleep(300)
+        if args.loop:
+            log('Sleeping for a few minutes')
+            time.sleep(300)
+        else:
+            log('Finished - exiting')
+            break
 
 pattern_arn = re.compile(
     'arn:'
