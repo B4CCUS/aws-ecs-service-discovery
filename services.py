@@ -17,6 +17,7 @@ import argparse
 import logging
 import os
 import re
+import time
 import boto
 import boto.ec2containerservice
 import boto.ec2
@@ -203,7 +204,8 @@ def cli():
     while True: 
         log('Running aws service update')
         update_services(args.service_names, True)
-        time.sleep(60)
+        log('Sleeping for a few minutes')
+        time.sleep(300)
 
 pattern_arn = re.compile(
     'arn:'
