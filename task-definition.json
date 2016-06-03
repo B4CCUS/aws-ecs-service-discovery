@@ -1,0 +1,33 @@
+{
+  "containerDefinitions": [
+    {
+      "volumesFrom": [],
+      "memory": 45,
+      "portMappings": [],
+      "essential": true,
+      "entryPoint": [
+        "awsesd"
+      ],
+      "mountPoints": [
+        {
+          "containerPath": "/etc/ecs",
+          "sourceVolume": "ecs_config",
+          "readOnly": true
+        }
+      ],
+      "name": "service-discovery",
+      "environment": [],
+      "image": "registry.b4cc.com:5000/aws-ecs-service-discovery",
+      "cpu": 2
+    }
+  ],
+  "volumes": [
+    {
+      "host": {
+        "sourcePath": "/etc/ecs"
+      },
+      "name": "ecs_config"
+    }
+  ],
+  "family": "service-discovery"
+}
